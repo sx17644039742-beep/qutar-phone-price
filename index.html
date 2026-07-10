@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Qatar Phone Price Dashboard · Samsung / Honor / Xiaomi</title>
+<style>
+  :root {
+    --samsung-1: #3ea6ff; --samsung-2: #7c5cff;
+    --honor-1: #00f5d4; --honor-2: #00b4ff;
+    --xiaomi-1: #ff9a3d; --xiaomi-2: #ff2e88;
+    --bg-0: #05070f; --bg-1: #0a0e1c;
+    --panel: rgba(255,255,255,0.045);
+    --border: rgba(255,255,255,0.09);
+    --text: #eef0fb; --muted: #8b93b8;
+    --accent-1: #7c3aed; --accent-2: #22d3ee;
+    --up: #ff5d7a; --down: #33e2a0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+    background:
+      radial-gradient(circle at 12% -8%, rgba(124,58,237,0.35), transparent 42%),
+      radial-gradient(circle at 92% 8%, rgba(34,211,238,0.22), transparent 40%),
+      radial-gradient(circle at 50% 110%, rgba(255,46,136,0.16), transparent 45%),
+      var(--bg-0);
+    color: var(--text); min-height: 100vh;
+  }
+  header { padding: 34px 36px 22px; }
+  header h1 {
+    margin: 0 0 8px; font-size: 25px; letter-spacing: 0.3px;
+    background: linear-gradient(90deg, #ffffff, #b9c2ff 45%, #7be8ff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  header p { margin: 0; color: var(--muted); font-size: 13px; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 6px 32px 70px; }
+  .glow-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+    backdrop-filter: blur(10px); box-shadow: 0 18px 40px -22px rgba(0,0,0,0.7);
+  }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .kpi-card { position: relative; border-radius: 16px; padding: 18px 20px; overflow: hidden; border: 1px solid var(--border);
+    background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01)); }
+  .kpi-card::before { content: ""; position: absolute; inset: -40%;
+    background: radial-gradient(circle, var(--glow-color, rgba(124,58,237,0.55)), transparent 60%); opacity: 0.5; filter: blur(6px); }
+  .kpi-card.total { --glow-color: rgba(124,58,237,0.55); }
+  .kpi-card.brands { --glow-color: rgba(34,211,238,0.5); }
+  .kpi-card.lowest { --glow-color: rgba(255,93,122,0.5); }
+  .kpi-card.avg { --glow-color: rgba(51,226,160,0.45); }
+  .kpi-card .kpi-inner { position: relative; z-index: 1; }
+  .kpi-card .kpi-label { font-size: 11px; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.6px; text-transform: uppercase; }
+  .kpi-card .kpi-value { font-size: 30px; font-weight: 700; line-height: 1; color: #fff; }
+  .kpi-card .kpi-value .unit { font-size: 12px; font-weight: 400; opacity: 0.7; margin-left: 5px; }
+  .kpi-card .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 9px; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-bottom: 22px; }
+  .brand-card { padding: 18px 20px; position: relative; cursor: pointer; transition: transform .15s ease; }
+  .brand-card:hover { transform: translateY(-2px); }
+  .brand-card::before { content: ""; position: absolute; top: 0; left: 14px; right: 14px; height: 2px; border-radius: 2px; }
+  .brand-card.Samsung::before { background: linear-gradient(90deg, var(--samsung-1), var(--samsung-2)); box-shadow: 0 0 12px var(--samsung-2); }
+  .brand-card.Honor::before { background: linear-gradient(90deg, var(--honor-1), var(--honor-2)); box-shadow: 0 0 12px var(--honor-2); }
+  .brand-card.Xiaomi::before { background: linear-gradient(90deg, var(--xiaomi-1), var(--xiaomi-2)); box-shadow: 0 0 12px var(--xiaomi-2); }
+  .brand-card.is-active { border-color: rgba(255,255,255,0.35); box-shadow: 0 0 0 1px rgba(255,255,255,0.2), 0 0 30px -6px rgba(124,58,237,0.6); }
+  .brand-card h3 { margin: 0 0 10px; font-size: 15px; font-weight: 600; color: #fff; }
+  .brand-card .price-row { font-size: 25px; font-weight: 700; margin-bottom: 4px; color: #fff; }
+  .brand-card .sub { font-size: 12px; color: var(--muted); line-height: 1.8; }
+  .brand-card a { color: #9db4ff; text-decoration: none; }
+  .brand-card a:hover { text-decoration: underline; }
+  .brand-card .hint { font-size: 10px; color: #5c6488; margin-top: 8px; }
+
+  .panel { padding: 20px; margin-bottom: 22px; }
+  .panel-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .panel h2 { margin: 0; font-size: 15px; font-weight: 600; color: #fff; }
+  .panel .panel-note { font-size: 11px; color: var(--muted); }
+  .badge-demo { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px;
+    background: rgba(34,211,238,0.15); color: #7fe6f7; border: 1px solid rgba(34,211,238,0.35); margin-left: 8px; }
+  .chart-wrap { max-width: 100%; height: 300px; }
+
+  /* Price Trend chart tooltip (hover on a data point shows model / config / date / price) */
+  .chart-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(16,19,31,0.97);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 11px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text);
+    box-shadow: 0 14px 34px -10px rgba(0,0,0,0.7);
+    z-index: 30;
+    display: none;
+    white-space: nowrap;
+  }
+
+  .filter-bar { position: relative; z-index: 20; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; padding: 16px 18px; margin-bottom: 16px; }
+  .filter-field { display: flex; flex-direction: column; gap: 6px; min-width: 190px; }
+  .filter-field label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); font-weight: 600; }
+  .filter-field select {
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 13px;
+    background: rgba(255,255,255,0.04); color: var(--text); cursor: pointer; min-width: 190px;
+  }
+  .filter-field select option { background: #10131f; color: var(--text); }
+  .filter-bar .spacer { flex: 1; }
+  .trend-filter-row { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+  .trend-filter-row .filter-field { min-width: 220px; }
+  .trend-filter-row select { min-width: 220px; }
+
+  /* Multi-select dropdown with search (Product Name filter) */
+  .ms-wrap { position: relative; min-width: 220px; }
+  .ms-button {
+    width: 100%; box-sizing: border-box; text-align: left;
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+    font-size: 13px; background: rgba(255,255,255,0.04); color: var(--text); cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ms-button:hover { border-color: var(--accent-2); }
+  .ms-caret { font-size: 9px; color: var(--muted); flex-shrink: 0; }
+  .ms-panel {
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
+    background: #10131f; border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 20px 44px -14px rgba(0,0,0,0.7);
+    width: 280px; padding: 10px;
+  }
+  .ms-panel[hidden] { display: none; }
+  .ms-search input {
+    width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; font-size: 12.5px; background: rgba(255,255,255,0.05); color: var(--text); margin-bottom: 8px;
+  }
+  .ms-search input:focus { outline: none; border-color: var(--accent-2); box-shadow: 0 0 0 3px rgba(34,211,238,0.18); }
+  .ms-actions { display: flex; gap: 8px; margin-bottom: 8px; }
+  .ms-actions button {
+    flex: 1; font-size: 11px; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03); color: var(--muted); cursor: pointer;
+  }
+  .ms-actions button:hover { color: #fff; border-color: var(--accent-2); }
+  .ms-options { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+  .ms-option { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 12.5px; }
+  .ms-option:hover { background: rgba(255,255,255,0.06); }
+  .ms-option input { accent-color: var(--accent-1); cursor: pointer; }
+  .ms-empty { padding: 10px 4px; text-align: center; color: var(--muted); font-size: 12px; }
+  .filter-bar .reset-btn {
+    border: 1px solid rgba(124,58,237,0.5);
+    background: linear-gradient(135deg, rgba(124,58,237,0.85), rgba(34,211,238,0.55));
+    color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 13px; cursor: pointer; font-weight: 600;
+  }
+  .filter-bar .result-count { font-size: 12px; color: var(--muted); align-self: center; }
+
+  table { width: 100%; border-collapse: collapse; }
+  .table-scroll { max-height: 620px; overflow-y: auto; }
+  thead th {
+    text-align: left; background: #10131f; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--muted); padding: 12px 14px; cursor: pointer; white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 5;
+  }
+  thead th:hover { color: #fff; }
+  tbody td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; color: var(--text); }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #06070d; }
+  .badge.Samsung { background: linear-gradient(90deg, var(--samsung-1), var(--samsung-2)); color: #060a1a; }
+  .badge.Honor { background: linear-gradient(90deg, var(--honor-1), var(--honor-2)); color: #04201c; }
+  .badge.Xiaomi { background: linear-gradient(90deg, var(--xiaomi-1), var(--xiaomi-2)); color: #1a0a06; }
+  .product-name { font-weight: 600; color: #fff; cursor: default; }
+  .config-pill { display: inline-block; font-size: 11.5px; padding: 2px 9px; border-radius: 8px; background: rgba(255,255,255,0.06); color: #c7cce6; border: 1px solid var(--border); }
+  .price-main { font-weight: 700; color: #fff; }
+  .price-na { color: var(--muted); font-style: italic; font-size: 12px; }
+  .status-pill { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 12px; margin-left: 6px; }
+  .status-pill.coming_soon { background: rgba(34,211,238,0.15); color: #7fe6f7; border: 1px solid rgba(34,211,238,0.35); }
+  .status-pill.unavailable { background: rgba(139,147,184,0.15); color: var(--muted); border: 1px solid rgba(139,147,184,0.3); }
+  a.link {
+    color: #0b0f1a; text-decoration: none; font-size: 11.5px; font-weight: 700;
+    background: linear-gradient(90deg, var(--accent-2), #6ee7ff); padding: 5px 12px; border-radius: 8px;
+  }
+  a.link:hover { filter: brightness(1.1); }
+  .empty-row td { text-align: center; color: var(--muted); padding: 34px; }
+
+  /* Comparison / benchmark table */
+  .bm-diff-up { color: var(--up); font-weight: 700; }
+  .bm-diff-down { color: var(--down); font-weight: 700; }
+  .bm-model { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .bm-price { font-weight: 700; color: #fff; }
+  .bm-note { font-size: 10.5px; color: #ffcf6e; margin-top: 3px; line-height: 1.5; max-width: 220px; }
+
+  footer { text-align: center; font-size: 12px; color: var(--muted); padding: 26px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Qatar Phone Price Dashboard</h1>
+  <p id="header-sub">Samsung / Honor / Xiaomi · loading data...</p>
+</header>
+
+<div class="container">
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div class="summary-grid" id="summary-grid"></div>
+
+  <div class="glow-card panel">
+    <div class="panel-head">
+      <h2>Price Trend <span id="trend-days-badge" class="badge-demo" style="display:none;"></span></h2>
+      <span class="panel-note" id="trend-note"></span>
+    </div>
+    <div class="trend-filter-row">
+      <div class="filter-field">
+        <label>Brand (only affects this chart)</label>
+        <select id="trend-filter-brand"></select>
+      </div>
+      <div class="filter-field">
+        <label>Model (only affects this chart)</label>
+        <select id="trend-filter-model"><option value="">All (top 5 by listing order)</option></select>
+      </div>
+    </div>
+    <div class="chart-wrap" id="trendChartWrap" style="position:relative;">
+      <div id="trendChartInner" style="height:100%;"></div>
+      <div class="chart-tooltip" id="trendTooltip"></div>
+    </div>
+  </div>
+
+  <div class="glow-card filter-bar">
+    <div class="filter-field">
+      <label>Product Name</label>
+      <div class="ms-wrap" id="ms-name"></div>
+    </div>
+    <div class="filter-field">
+      <label>Brand</label>
+      <select id="filter-brand"><option value="">All Brands</option></select>
+    </div>
+    <div class="filter-field">
+      <label>Status</label>
+      <select id="filter-status">
+        <option value="">All</option>
+        <option value="priced">Priced (in stock)</option>
+        <option value="coming_soon">Coming Soon</option>
+        <option value="unavailable">Unavailable / Where to buy</option>
+      </select>
+    </div>
+    <button class="reset-btn" id="reset-btn">Reset Filters</button>
+    <div class="spacer"></div>
+    <span class="result-count" id="result-count"></span>
+  </div>
+
+  <div class="glow-card" style="overflow:hidden;">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th data-key="brand">Brand</th>
+            <th data-key="name">Product Name</th>
+            <th data-key="config">Config</th>
+            <th data-key="price">Price (QAR)</th>
+            <th data-key="source">Source</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer id="footer-note"></footer>
+</div>
+
+<script>
+const API_BASE = '';
+const EMBEDDED_DATA = {"scraped_at": "2026-07-10", "currency": "QAR", "products": [{"sku": "qa-honor-600-5g-12g+256g", "brand": "Honor", "name": "HONOR 600 5G", "price": 1899.0, "url": "https://shopintertec.com/products/honor-600-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9242103316695"}, {"sku": "qa-honor-600-5g-8g+256g", "brand": "Honor", "name": "HONOR 600 5G", "price": 1599.0, "url": "https://shopintertec.com/products/honor-600-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9242103316695"}, {"sku": "qa-honor-magic-8-pro-12g+512g", "brand": "Honor", "name": "HONOR Magic 8 Pro", "price": 3849.0, "url": "https://shopintertec.com/products/honor-magic8-pro", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "9124637573335"}, {"sku": "qa-honor-magic-8-pro-16g+1t", "brand": "Honor", "name": "HONOR Magic 8 Pro", "price": 4699.0, "url": "https://shopintertec.com/products/honor-magic8-pro", "source": "shopintertec.com", "monitor": true, "config": "16G+1T", "product_id": "9124637573335"}, {"sku": "qa-honor-magic-v6-5g-16g+512g", "brand": "Honor", "name": "HONOR Magic V6 5G", "price": 6999.0, "url": "https://shopintertec.com/products/honor-magic-v6-5g", "source": "shopintertec.com", "monitor": true, "config": "16G+512G", "product_id": "9301693006039"}, {"sku": "qa-honor-x5-b-4g+64g", "brand": "Honor", "name": "HONOR X5 B", "price": 279.0, "url": "https://shopintertec.com/products/honor-x5-b-1", "source": "shopintertec.com", "monitor": true, "config": "4G+64G", "product_id": "8879786655959"}, {"sku": "qa-honor-x5c-4g+64g", "brand": "Honor", "name": "HONOR X5C", "price": 349.0, "url": "https://shopintertec.com/products/honor-x5c", "source": "shopintertec.com", "monitor": true, "config": "4G+64G", "product_id": "9061728452823"}, {"sku": "qa-honor-x6d-5g-2967", "brand": "Honor", "name": "HONOR X6d 5G", "price": 629.0, "url": "https://shopintertec.com/products/honor-x6d-5g", "source": "shopintertec.com", "monitor": true, "config": null, "product_id": "9212289482967"}, {"sku": "qa-honor-x7c-4g+256g", "brand": "Honor", "name": "HONOR X7c", "price": 509.0, "url": "https://shopintertec.com/products/honor-x7-c", "source": "shopintertec.com", "monitor": true, "config": "4G+256G", "product_id": "8805339005143"}, {"sku": "qa-honor-x7c-8g+256g", "brand": "Honor", "name": "HONOR X7c", "price": 509.0, "url": "https://shopintertec.com/products/honor-x7-c", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8805339005143"}, {"sku": "qa-honor-x7c-5g-4g+256g", "brand": "Honor", "name": "HONOR X7c 5G", "price": 549.0, "url": "https://shopintertec.com/products/honor-x7-c-5g", "source": "shopintertec.com", "monitor": true, "config": "4G+256G", "product_id": "8879828893911"}, {"sku": "qa-honor-x7c-5g-8g+256g", "brand": "Honor", "name": "HONOR X7c 5G", "price": 699.0, "url": "https://shopintertec.com/products/honor-x7-c-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8879828893911"}, {"sku": "qa-honor-x7d-4g-8g+256g", "brand": "Honor", "name": "HONOR X7d 4G", "price": 749.0, "url": "https://shopintertec.com/products/honor-x7d-4g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9043880837335"}, {"sku": "qa-honor-x7d-5g-6g+128g", "brand": "Honor", "name": "HONOR X7d 5G", "price": 549.0, "url": "https://shopintertec.com/products/honor-x7d-5g", "source": "shopintertec.com", "monitor": true, "config": "6G+128G", "product_id": "9043880771799"}, {"sku": "qa-honor-x7d-5g-8g+256g", "brand": "Honor", "name": "HONOR X7d 5G", "price": 839.0, "url": "https://shopintertec.com/products/honor-x7d-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9043880771799"}, {"sku": "qa-honor-x8-c-8g+256g", "brand": "Honor", "name": "HONOR X8 C", "price": 599.0, "url": "https://shopintertec.com/products/honor-x8-c", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8879856124119"}, {"sku": "qa-honor-x8d-4g-8g+256g", "brand": "Honor", "name": "HONOR X8d 4G", "price": 749.0, "url": "https://shopintertec.com/products/honor-x8d-4g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9159144505559"}, {"sku": "qa-honor-x9c-smart-5g-12g+256g", "brand": "Honor", "name": "HONOR X9C SMART 5G", "price": 829.0, "url": "https://shopintertec.com/products/honor-x9c-smart-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "8881882792151"}, {"sku": "qa-honor-x9c-5g-12g+256g", "brand": "Honor", "name": "HONOR X9c 5G", "price": 1099.0, "url": "https://shopintertec.com/products/honor-x9c-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "8767679234263"}, {"sku": "qa-honor-x9d-5g-12g+256g", "brand": "Honor", "name": "HONOR X9d 5G", "price": 1269.0, "url": "https://shopintertec.com/products/unbreakable-performance-honor-x9d-5g-phone", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9065699999959"}, {"sku": "qa-honor-x6b-6g+128g", "brand": "Honor", "name": "Honor X6b", "price": 375.0, "url": "https://shopintertec.com/products/honor-x6b", "source": "shopintertec.com", "monitor": true, "config": "6G+128G", "product_id": "8682007658711"}, {"sku": "qa-honor-x6b-6g+256g", "brand": "Honor", "name": "Honor X6b", "price": 415.0, "url": "https://shopintertec.com/products/honor-x6b", "source": "shopintertec.com", "monitor": true, "config": "6G+256G", "product_id": "8682007658711"}, {"sku": "qa-samsung-galaxy-a07-5g-6g+128g", "brand": "Samsung", "name": "Samsung Galaxy A07 5G", "price": 599.0, "url": "https://shopintertec.com/products/samsung-galaxy-a07-5g", "source": "shopintertec.com", "monitor": true, "config": "6G+128G", "product_id": "9234020237527"}, {"sku": "qa-samsung-galaxy-a17-5g-4g+128g", "brand": "Samsung", "name": "Samsung Galaxy A17 5G", "price": 629.0, "url": "https://shopintertec.com/products/samsung-galaxy-a17-5g", "source": "shopintertec.com", "monitor": true, "config": "4G+128G", "product_id": "9023808078039"}, {"sku": "qa-samsung-galaxy-a17-5g-8g+256g", "brand": "Samsung", "name": "Samsung Galaxy A17 5G", "price": 899.0, "url": "https://shopintertec.com/products/samsung-galaxy-a17-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9023808078039"}, {"sku": "qa-samsung-galaxy-a26-8g+256g", "brand": "Samsung", "name": "Samsung Galaxy A26", "price": 949.0, "url": "https://shopintertec.com/products/samsung-galaxy-a26", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8874199974103"}, {"sku": "qa-samsung-galaxy-a37-5g-8g+256g", "brand": "Samsung", "name": "Samsung Galaxy A37 5G", "price": 1299.0, "url": "https://shopintertec.com/products/samsung-galaxy-a37-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9237583495383"}, {"sku": "qa-samsung-galaxy-a57-5g-8g+256g", "brand": "Samsung", "name": "Samsung Galaxy A57 5G", "price": 1449.0, "url": "https://shopintertec.com/products/samsung-galaxy-a57-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9237584216279"}, {"sku": "qa-samsung-galaxy-s25-ultra-5g-12g+256g", "brand": "Samsung", "name": "Samsung Galaxy S25 Ultra 5G", "price": 3149.0, "url": "https://shopintertec.com/products/samsung-galaxy-s25-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "8819567657175"}, {"sku": "qa-samsung-galaxy-s25-ultra-5g-12g+512g", "brand": "Samsung", "name": "Samsung Galaxy S25 Ultra 5G", "price": 4199.0, "url": "https://shopintertec.com/products/samsung-galaxy-s25-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "8819567657175"}, {"sku": "qa-samsung-galaxy-s26-5g-12g+256g", "brand": "Samsung", "name": "Samsung Galaxy S26 5G", "price": 2899.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9192417984727"}, {"sku": "qa-samsung-galaxy-s26-5g-12g+512g", "brand": "Samsung", "name": "Samsung Galaxy S26 5G", "price": 3599.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "9192417984727"}, {"sku": "qa-samsung-galaxy-s26-ultra-5g-12g+256g", "brand": "Samsung", "name": "Samsung Galaxy S26 Ultra 5G", "price": 3799.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9192423358679"}, {"sku": "qa-samsung-galaxy-s26-ultra-5g-12g+512g", "brand": "Samsung", "name": "Samsung Galaxy S26 Ultra 5G", "price": 4649.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "9192423358679"}, {"sku": "qa-samsung-galaxy-s26-ultra-5g-16g+1t", "brand": "Samsung", "name": "Samsung Galaxy S26 Ultra 5G", "price": 5799.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "16G+1T", "product_id": "9192423358679"}, {"sku": "qa-redmi-14c-4g+128g", "brand": "Xiaomi", "name": "Redmi 14C", "price": 349.0, "url": "https://shopintertec.com/products/redmi-14c", "source": "shopintertec.com", "monitor": true, "config": "4G+128G", "product_id": "8698394181847"}, {"sku": "qa-redmi-14c-8g+256g", "brand": "Xiaomi", "name": "Redmi 14C", "price": 399.0, "url": "https://shopintertec.com/products/redmi-14c", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8698394181847"}, {"sku": "qa-redmi-15c-4g-4g+256g", "brand": "Xiaomi", "name": "Redmi 15C 4G", "price": 479.0, "url": "https://shopintertec.com/products/redmi-15c-4g-1", "source": "shopintertec.com", "monitor": true, "config": "4G+256G", "product_id": "9270722527447"}, {"sku": "qa-redmi-15c-5g-4g+128g", "brand": "Xiaomi", "name": "Redmi 15C 5G", "price": 479.0, "url": "https://shopintertec.com/products/redmi-15c-5g", "source": "shopintertec.com", "monitor": true, "config": "4G+128G", "product_id": "9038453211351"}, {"sku": "qa-redmi-15c-5g-8g+256g", "brand": "Xiaomi", "name": "Redmi 15C 5G", "price": 559.0, "url": "https://shopintertec.com/products/redmi-15c-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9038453211351"}, {"sku": "qa-redmi-note-15-pro-5g-12g+256g", "brand": "Xiaomi", "name": "Redmi Note 15 Pro 5G", "price": 1279.0, "url": "https://shopintertec.com/products/redmi-note-15-pro-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9144632541399"}, {"sku": "qa-redmi-note-15-pro-5g-8g+256g", "brand": "Xiaomi", "name": "Redmi Note 15 Pro 5G", "price": 1179.0, "url": "https://shopintertec.com/products/redmi-note-15-pro-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9144632541399"}, {"sku": "qa-xiaomi-15-5g-12g+512g", "brand": "Xiaomi", "name": "Xiaomi 15 5G", "price": 2699.0, "url": "https://shopintertec.com/products/xiaomi-15-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "8855385800919"}, {"sku": "qa-xiaomi-17t-5g-12g+256g", "brand": "Xiaomi", "name": "Xiaomi 17T 5G", "price": 1999.0, "url": "https://shopintertec.com/products/xiaomi-17t-5g-new-arrival", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9269439365335"}, {"sku": "qa-xiaomi-17t-5g-12g+512g", "brand": "Xiaomi", "name": "Xiaomi 17T 5G", "price": 2199.0, "url": "https://shopintertec.com/products/xiaomi-17t-5g-new-arrival", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "9269439365335"}]};
+const EMBEDDED_HISTORY = {"qa-honor-600-5g-12g+256g": {"2026-07-10": 1899.0}, "qa-honor-600-5g-8g+256g": {"2026-07-10": 1599.0}, "qa-honor-magic-8-pro-12g+512g": {"2026-07-10": 3849.0}, "qa-honor-magic-8-pro-16g+1t": {"2026-07-10": 4699.0}, "qa-honor-magic-v6-5g-16g+512g": {"2026-07-10": 6999.0}, "qa-honor-x5-b-4g+64g": {"2026-07-10": 279.0}, "qa-honor-x5c-4g+64g": {"2026-07-10": 349.0}, "qa-honor-x6d-5g-2967": {"2026-07-10": 629.0}, "qa-honor-x7c-4g+256g": {"2026-07-10": 509.0}, "qa-honor-x7c-8g+256g": {"2026-07-10": 509.0}, "qa-honor-x7c-5g-4g+256g": {"2026-07-10": 549.0}, "qa-honor-x7c-5g-8g+256g": {"2026-07-10": 699.0}, "qa-honor-x7d-4g-8g+256g": {"2026-07-10": 749.0}, "qa-honor-x7d-5g-6g+128g": {"2026-07-10": 549.0}, "qa-honor-x7d-5g-8g+256g": {"2026-07-10": 839.0}, "qa-honor-x8-c-8g+256g": {"2026-07-10": 599.0}, "qa-honor-x8d-4g-8g+256g": {"2026-07-10": 749.0}, "qa-honor-x9c-smart-5g-12g+256g": {"2026-07-10": 829.0}, "qa-honor-x9c-5g-12g+256g": {"2026-07-10": 1099.0}, "qa-honor-x9d-5g-12g+256g": {"2026-07-10": 1269.0}, "qa-honor-x6b-6g+128g": {"2026-07-10": 375.0}, "qa-honor-x6b-6g+256g": {"2026-07-10": 415.0}, "qa-samsung-galaxy-a07-5g-6g+128g": {"2026-07-10": 599.0}, "qa-samsung-galaxy-a17-5g-4g+128g": {"2026-07-10": 629.0}, "qa-samsung-galaxy-a17-5g-8g+256g": {"2026-07-10": 899.0}, "qa-samsung-galaxy-a26-8g+256g": {"2026-07-10": 949.0}, "qa-samsung-galaxy-a37-5g-8g+256g": {"2026-07-10": 1299.0}, "qa-samsung-galaxy-a57-5g-8g+256g": {"2026-07-10": 1449.0}, "qa-samsung-galaxy-s25-ultra-5g-12g+256g": {"2026-07-10": 3149.0}, "qa-samsung-galaxy-s25-ultra-5g-12g+512g": {"2026-07-10": 4199.0}, "qa-samsung-galaxy-s26-5g-12g+256g": {"2026-07-10": 2899.0}, "qa-samsung-galaxy-s26-5g-12g+512g": {"2026-07-10": 3599.0}, "qa-samsung-galaxy-s26-ultra-5g-12g+256g": {"2026-07-10": 3799.0}, "qa-samsung-galaxy-s26-ultra-5g-12g+512g": {"2026-07-10": 4649.0}, "qa-samsung-galaxy-s26-ultra-5g-16g+1t": {"2026-07-10": 5799.0}, "qa-redmi-14c-4g+128g": {"2026-07-10": 349.0}, "qa-redmi-14c-8g+256g": {"2026-07-10": 399.0}, "qa-redmi-15c-4g-4g+256g": {"2026-07-10": 479.0}, "qa-redmi-15c-5g-4g+128g": {"2026-07-10": 479.0}, "qa-redmi-15c-5g-8g+256g": {"2026-07-10": 559.0}, "qa-redmi-note-15-pro-5g-12g+256g": {"2026-07-10": 1279.0}, "qa-redmi-note-15-pro-5g-8g+256g": {"2026-07-10": 1179.0}, "qa-xiaomi-15-5g-12g+512g": {"2026-07-10": 2699.0}, "qa-xiaomi-17t-5g-12g+256g": {"2026-07-10": 1999.0}, "qa-xiaomi-17t-5g-12g+512g": {"2026-07-10": 2199.0}};
+let allProducts = [];
+let sortKey = 'brand_name';
+let sortDir = 'asc';
+const trendCache = {};
+
+const state = { brand: '', status: '', name: [] };
+const trendState = { brand: 'Samsung', model: '' };
+const msUI = {}; // per-widget-instance-id UI state for the multi-select dropdown: { open, search }
+let msInstances = []; // populated each render() cycle, reused by open/close toggles
+
+const BRAND_COLOR_CYCLE = ['#7c5cff', '#22d3ee', '#ff2e88', '#ffb020', '#33e2a0'];
+
+
+function statusOf(p) {
+  if (p.price !== null && p.price !== undefined) return 'priced';
+  return p.status || 'unavailable';
+}
+
+async function boot() {
+  let data;
+  if (typeof EMBEDDED_DATA !== 'undefined' && EMBEDDED_DATA && EMBEDDED_DATA.products) {
+    data = EMBEDDED_DATA;
+  } else {
+    const res = await fetch(API_BASE + '/api/phones');
+    data = await res.json();
+  }
+  allProducts = data.products;
+
+  document.getElementById('footer-note').textContent =
+    `Source: shopintertec.com (Qatar) · Scraped at ${data.scraped_at} · Price = listed price in QAR at time of scraping, lowest price across color variants for each RAM+Storage config.`;
+
+  populateTrendFilters();
+  wireFilterEvents();
+  render();
+}
+
+function populateTrendFilters() {
+  const brandSel = document.getElementById('trend-filter-brand');
+  const brands = uniqueSorted(allProducts.map(p => p.brand));
+  if (!brands.includes(trendState.brand)) trendState.brand = brands[0] || '';
+  brandSel.innerHTML = brands.map(b => `<option value="${b}" ${trendState.brand === b ? 'selected' : ''}>${b}</option>`).join('');
+  populateTrendModelOptions();
+}
+
+function populateTrendModelOptions() {
+  const modelSel = document.getElementById('trend-filter-model');
+  const models = allProducts.filter(p => p.brand === trendState.brand && p.price !== null && p.price !== undefined);
+  if (!models.some(p => p.sku === trendState.model)) trendState.model = '';
+  modelSel.innerHTML = '<option value="">All (top 5 by listing order)</option>' +
+    models.map(p => `<option value="${p.sku}" ${trendState.model === p.sku ? 'selected' : ''}>${p.name}${p.config ? ' (' + p.config + ')' : ''}</option>`).join('');
+}
+
+function applyFilters(products) {
+  return products.filter(p => {
+    if (state.brand && p.brand !== state.brand) return false;
+    if (state.status && statusOf(p) !== state.status) return false;
+    if (state.name.length && !state.name.includes(p.name)) return false;
+    return true;
+  });
+}
+
+function uniqueSorted(arr) { return [...new Set(arr)].sort(); }
+
+// ---------- Multi-select-with-search dropdown widget (Product Name filter) ----------
+function ensureMsUI(id) {
+  if (!msUI[id]) msUI[id] = { open: false, search: '' };
+  return msUI[id];
+}
+
+function closeAllMsPanels() {
+  Object.values(msUI).forEach(ui => { ui.open = false; });
+}
+
+function msOptionsHtml(store, options, search, key) {
+  const filtered = options.filter(o => o.toLowerCase().includes(search.toLowerCase()));
+  if (!filtered.length) return '<div class="ms-empty">No matches</div>';
+  return filtered.map(o => `
+    <label class="ms-option">
+      <input type="checkbox" value="${o.replace(/"/g, '&quot;')}" ${store[key].includes(o) ? 'checked' : ''} />
+      <span>${o}</span>
+    </label>
+  `).join('');
+}
+
+function toggleMsValue(store, key, val) {
+  const arr = store[key];
+  const idx = arr.indexOf(val);
+  if (idx >= 0) arr.splice(idx, 1); else arr.push(val);
+  render();
+}
+
+function renderMultiSelect(containerId, { store, key, options, allLabel }) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const ui = ensureMsUI(containerId);
+
+  const labelText = store[key].length === 0
+    ? allLabel
+    : store[key].length <= 2
+      ? store[key].join(', ')
+      : `${store[key].length} selected`;
+
+  container.innerHTML = `
+    <button type="button" class="ms-button">${labelText}<span class="ms-caret">▾</span></button>
+    <div class="ms-panel" ${ui.open ? '' : 'hidden'}>
+      <div class="ms-search"><input type="text" placeholder="Search..." value="${ui.search.replace(/"/g, '&quot;')}" /></div>
+      <div class="ms-actions">
+        <button type="button" data-act="all">Select All</button>
+        <button type="button" data-act="clear">Clear</button>
+      </div>
+      <div class="ms-options">${msOptionsHtml(store, options, ui.search, key)}</div>
+    </div>
+  `;
+
+  const btn = container.querySelector('.ms-button');
+  const panel = container.querySelector('.ms-panel');
+  const searchInput = container.querySelector('.ms-search input');
+  const optionsDiv = container.querySelector('.ms-options');
+  const actionsDiv = container.querySelector('.ms-actions');
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !ui.open;
+    closeAllMsPanels();
+    ui.open = willOpen;
+    msInstances.forEach(inst => renderMultiSelect(inst.id, inst));
+  });
+  panel.addEventListener('click', (e) => e.stopPropagation());
+
+  function wireOptionCheckboxes() {
+    optionsDiv.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      cb.addEventListener('change', () => toggleMsValue(store, key, cb.value));
+    });
+  }
+  wireOptionCheckboxes();
+
+  // Typing in the search box only rebuilds the option list (not the whole
+  // widget), so the input never loses focus mid-keystroke.
+  searchInput.addEventListener('input', (e) => {
+    ui.search = e.target.value;
+    optionsDiv.innerHTML = msOptionsHtml(store, options, ui.search, key);
+    wireOptionCheckboxes();
+  });
+
+  actionsDiv.querySelector('[data-act="all"]').addEventListener('click', () => {
+    store[key] = options.slice();
+    render();
+  });
+  actionsDiv.querySelector('[data-act="clear"]').addEventListener('click', () => {
+    store[key] = [];
+    render();
+  });
+}
+
+document.addEventListener('click', () => {
+  if (Object.values(msUI).some(ui => ui.open)) {
+    closeAllMsPanels();
+    msInstances.forEach(inst => renderMultiSelect(inst.id, inst));
+  }
+});
+
+function render() {
+  const brandOptions = uniqueSorted(allProducts.map(p => p.brand));
+  const brandSelect = document.getElementById('filter-brand');
+  brandSelect.innerHTML = '<option value="">All Brands</option>' + brandOptions.map(b => `<option value="${b}" ${state.brand===b?'selected':''}>${b}</option>`).join('');
+  document.getElementById('filter-status').value = state.status;
+
+  // Product Name multi-select: drop any previously-selected names that no
+  // longer exist in the catalog, then (re)render the searchable dropdown.
+  const nameOptions = uniqueSorted(allProducts.map(p => p.name));
+  state.name = state.name.filter(v => nameOptions.includes(v));
+  msInstances = [
+    { id: 'ms-name', store: state, key: 'name', options: nameOptions, allLabel: 'All Products' },
+  ];
+  msInstances.forEach(inst => renderMultiSelect(inst.id, inst));
+
+  const filtered = applyFilters(allProducts);
+  renderKPI(filtered);
+  renderBrandCards(filtered);
+  try { renderTrendChart(); } catch (e) { console.warn('Trend chart skipped:', e); }
+  renderTable(filtered);
+
+  document.getElementById('header-sub').textContent =
+    `Samsung / Honor / Xiaomi · ${filtered.length} / ${allProducts.length} models matched`;
+}
+
+function renderKPI(filtered) {
+  const grid = document.getElementById('kpi-grid');
+  const priced = filtered.filter(p => p.price !== null && p.price !== undefined);
+  const brandsCovered = uniqueSorted(filtered.map(p => p.brand)).length;
+  const lowestOverall = priced.length ? Math.min(...priced.map(p => p.price)) : 0;
+  const avgOverall = priced.length ? (priced.reduce((s, p) => s + p.price, 0) / priced.length) : 0;
+
+  grid.innerHTML = `
+    <div class="glow-card kpi-card total"><div class="kpi-inner">
+      <div class="kpi-label">Total Products</div>
+      <div class="kpi-value">${filtered.length}<span class="unit">models</span></div>
+      <div class="kpi-sub">${priced.length} with a listed price, ${filtered.length - priced.length} coming soon / unavailable</div>
+    </div></div>
+    <div class="glow-card kpi-card brands"><div class="kpi-inner">
+      <div class="kpi-label">Brands Covered</div>
+      <div class="kpi-value">${brandsCovered}<span class="unit">brands</span></div>
+      <div class="kpi-sub">Samsung · Honor · Xiaomi</div>
+    </div></div>
+    <div class="glow-card kpi-card lowest"><div class="kpi-inner">
+      <div class="kpi-label">Lowest Price (Filtered)</div>
+      <div class="kpi-value">${lowestOverall.toFixed(0)}<span class="unit">QAR</span></div>
+      <div class="kpi-sub">Among models with a listed price</div>
+    </div></div>
+    <div class="glow-card kpi-card avg"><div class="kpi-inner">
+      <div class="kpi-label">Average Price (Filtered)</div>
+      <div class="kpi-value">${avgOverall.toFixed(0)}<span class="unit">QAR</span></div>
+      <div class="kpi-sub">Mean of priced models</div>
+    </div></div>
+  `;
+}
+
+function renderBrandCards(filtered) {
+  const grid = document.getElementById('summary-grid');
+  const brands = uniqueSorted(filtered.map(p => p.brand));
+  if (!brands.length) {
+    grid.innerHTML = `<div class="glow-card brand-card"><div class="sub">No products match the current filters</div></div>`;
+    return;
+  }
+  grid.innerHTML = '';
+  brands.forEach(b => {
+    const items = filtered.filter(p => p.brand === b);
+    const priced = items.filter(p => p.price !== null && p.price !== undefined);
+    const isActive = state.brand === b;
+    const el = document.createElement('div');
+    el.className = 'glow-card brand-card ' + b + (isActive ? ' is-active' : '');
+    if (priced.length) {
+      const cheapest = priced.reduce((min, p) => p.price < min.price ? p : min, priced[0]);
+      const minPrice = Math.min(...priced.map(p=>p.price));
+      const avgPrice = priced.reduce((s,p)=>s+p.price,0) / priced.length;
+      el.innerHTML = `
+        <h3>${b}</h3>
+        <div class="price-row">${minPrice.toFixed(0)} <span style="font-size:12px;font-weight:400;color:var(--muted);">QAR from</span></div>
+        <div class="sub">
+          ${items.length} models total (${priced.length} priced) · avg ${avgPrice.toFixed(0)} QAR<br/>
+          Cheapest: <a href="${cheapest.url}" target="_blank" onclick="event.stopPropagation()">${cheapest.name}</a>
+        </div>
+        <div class="hint">Click to filter by this brand</div>
+      `;
+    } else {
+      el.innerHTML = `<h3>${b}</h3><div class="sub">${items.length} models, none currently priced</div><div class="hint">Click to filter by this brand</div>`;
+    }
+    el.addEventListener('click', () => {
+      state.brand = isActive ? '' : b;
+      render();
+    });
+    grid.appendChild(el);
+  });
+}
+
+async function getRealTrend(sku) {
+  if (trendCache[sku]) return trendCache[sku];
+  let series = null;
+  try {
+    const res = await fetch(`${API_BASE}/api/trend?sku=${encodeURIComponent(sku)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.series && data.series.length) series = data.series;
+    }
+  } catch (e) { /* no backend reachable (standalone file) */ }
+  if (!series) {
+    const hist = EMBEDDED_HISTORY[sku];
+    if (hist) series = Object.keys(hist).sort().map(d => ({ date: d, price: hist[d] }));
+  }
+  trendCache[sku] = series || [];
+  return trendCache[sku];
+}
+
+async function renderTrendChart() {
+  const wrap = document.getElementById('trendChartInner');
+  const outerWrap = document.getElementById('trendChartWrap');
+  const tooltip = document.getElementById('trendTooltip');
+  const note = document.getElementById('trend-note');
+  const badge = document.getElementById('trend-days-badge');
+  if (tooltip) tooltip.style.display = 'none';
+
+  const brandPool = allProducts.filter(p => p.brand === trendState.brand && p.price !== null && p.price !== undefined);
+  const pool = trendState.model ? brandPool.filter(p => p.sku === trendState.model) : brandPool;
+  const lines = trendState.model ? pool.slice(0, 1) : pool.slice(0, 5);
+  if (note) {
+    note.textContent = trendState.model
+      ? `Showing ${trendState.brand}: ${lines[0] ? lines[0].name : ''}${lines[0] && lines[0].config ? ' (' + lines[0].config + ')' : ''}`
+      : `Showing up to 5 priced ${trendState.brand} models`;
+  }
+
+  if (!wrap) return;
+  if (!lines.length) {
+    if (badge) badge.style.display = 'none';
+    wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:13px;">No priced models for this brand yet</div>';
+    return;
+  }
+
+  const seriesList = await Promise.all(lines.map(p => getRealTrend(p.sku)));
+  const allDates = Array.from(new Set(seriesList.flatMap(s => s.map(pt => pt.date)))).sort();
+  const daysRecorded = allDates.length;
+
+  if (badge) {
+    badge.style.display = 'inline-block';
+    badge.textContent = daysRecorded <= 1 ? 'real data · 1 day recorded' : `real data · ${daysRecorded} days recorded`;
+  }
+
+  if (daysRecorded <= 1) {
+    wrap.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;">
+        <div style="color:var(--muted);font-size:12.5px;max-width:640px;text-align:center;line-height:1.6;">
+          Only one real price snapshot has been recorded so far${allDates[0] ? ' (' + allDates[0] + ')' : ''}. A trend line needs at least two days of
+          real data — re-run the local update script on a later day and this turns into a real multi-point chart automatically.
+        </div>
+        <div style="display:flex;gap:28px;flex-wrap:wrap;justify-content:center;">
+          ${lines.map((p, li) => `<div style="text-align:center;">
+              <div style="width:10px;height:10px;border-radius:2px;background:${BRAND_COLOR_CYCLE[li % BRAND_COLOR_CYCLE.length]};margin:0 auto 8px;"></div>
+              <div style="font-size:22px;font-weight:700;color:#fff;">${p.price.toFixed(0)} QAR</div>
+              <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">${p.name}${p.config ? ' · ' + p.config : ''}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    return;
+  }
+
+  const labels = allDates;
+  const perSeries = seriesList.map(s => {
+    const byDate = Object.fromEntries(s.map(pt => [pt.date, pt.price]));
+    return labels.map(d => (d in byDate ? byDate[d] : null));
+  });
+  const allValues = perSeries.flat().filter(v => v !== null);
+  const rawMin = Math.min(...allValues), rawMax = Math.max(...allValues);
+  const pad = (rawMax - rawMin) * 0.12 || rawMax * 0.05 || 1;
+  const minV = rawMin - pad, maxV = rawMax + pad;
+
+  const width = 960, height = 300;
+  const m = { left: 56, right: 20, top: 16, bottom: 30 };
+  const plotW = width - m.left - m.right;
+  const plotH = height - m.top - m.bottom;
+  const xAt = i => m.left + (labels.length === 1 ? 0.5 : i / (labels.length - 1)) * plotW;
+  const yAt = v => m.top + plotH - ((v - minV) / (maxV - minV || 1)) * plotH;
+
+  let svg = `<svg viewBox="0 0 ${width} ${height}" width="100%" height="100%" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">`;
+  const gridLines = 4;
+  for (let g = 0; g <= gridLines; g++) {
+    const gy = m.top + (plotH / gridLines) * g;
+    const val = maxV - (maxV - minV) * (g / gridLines);
+    svg += `<line x1="${m.left}" x2="${width - m.right}" y1="${gy.toFixed(1)}" y2="${gy.toFixed(1)}" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
+    svg += `<text x="${m.left - 8}" y="${(gy + 3.5).toFixed(1)}" text-anchor="end" font-size="10.5" fill="#8b93b8">${val.toFixed(0)}</text>`;
+  }
+  // The first/last date labels are anchored to the INSIDE edge (start/end)
+  // rather than centered on their point, so they don't get clipped by the
+  // card's rounded corners — same fix already applied on the other two
+  // dashboards' identical chart code.
+  labels.forEach((lab, i) => {
+    const anchor = i === 0 ? 'start' : (i === labels.length - 1 ? 'end' : 'middle');
+    svg += `<text x="${xAt(i).toFixed(1)}" y="${height - 8}" text-anchor="${anchor}" font-size="10" fill="#8b93b8">${lab.slice(5)}</text>`;
+  });
+  // Hit-area circles are collected separately and appended AFTER every line's
+  // polygon/polyline/dot (see noon_scrape's identical fix) — SVG paints in
+  // document order, so an earlier line's hit circles would otherwise end up
+  // underneath a later line's filled area polygon and stop receiving hover
+  // events.
+  let hitCircles = '';
+  lines.forEach((p, li) => {
+    const series = perSeries[li];
+    const color = BRAND_COLOR_CYCLE[li % BRAND_COLOR_CYCLE.length];
+    const knownIdx = series.map((v, i) => v !== null ? i : null).filter(i => i !== null);
+    if (!knownIdx.length) return;
+    const points = knownIdx.map(i => `${xAt(i).toFixed(1)},${yAt(series[i]).toFixed(1)}`).join(' ');
+    const areaPoints = `${xAt(knownIdx[0]).toFixed(1)},${(m.top + plotH).toFixed(1)} ${points} ${xAt(knownIdx[knownIdx.length-1]).toFixed(1)},${(m.top + plotH).toFixed(1)}`;
+    svg += `<polygon points="${areaPoints}" fill="${color}22" stroke="none"/>`;
+    svg += `<polyline points="${points}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const lineLabel = `${p.name}${p.config ? ' · ' + p.config : ''}`;
+    knownIdx.forEach(i => {
+      const cx = xAt(i).toFixed(1), cy = yAt(series[i]).toFixed(1);
+      svg += `<circle cx="${cx}" cy="${cy}" r="3.5" fill="${color}"/>`;
+      hitCircles += `<circle class="trend-point" data-label="${lineLabel}" data-date="${labels[i]}" data-price="${series[i].toFixed(2)}" cx="${cx}" cy="${cy}" r="9" fill="transparent" style="cursor:pointer;"/>`;
+    });
+  });
+  svg += hitCircles;
+  svg += `</svg>`;
+
+  const legend = `<div style="display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:6px;">` +
+    lines.map((p, li) => `<span style="font-size:12px;color:#c7cce6;display:inline-flex;align-items:center;gap:6px;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BRAND_COLOR_CYCLE[li % BRAND_COLOR_CYCLE.length]};"></span>
+        ${p.name}${p.config ? ' · ' + p.config : ''}
+      </span>`).join('') + `</div>`;
+
+  wrap.innerHTML = `<div style="height:${height - 34}px;">${svg}</div>${legend}`;
+  attachTrendTooltip(wrap, outerWrap, tooltip);
+}
+
+// Hovering a data point shows a small floating card with that exact line's
+// model+config, the hovered date, and the recorded price for that day.
+function attachTrendTooltip(innerEl, outerEl, tooltip) {
+  if (!innerEl || !outerEl || !tooltip) return;
+  innerEl.querySelectorAll('.trend-point').forEach(pt => {
+    pt.addEventListener('mousemove', (e) => {
+      tooltip.innerHTML = `
+        <div style="font-weight:600;color:#fff;">${pt.dataset.label}</div>
+        <div style="color:var(--muted);margin-top:2px;">${pt.dataset.date}</div>
+        <div style="font-weight:700;color:#fff;margin-top:2px;">${pt.dataset.price} QAR</div>
+      `;
+      tooltip.style.display = 'block';
+      const rect = outerEl.getBoundingClientRect();
+      let x = e.clientX - rect.left + 14;
+      let y = e.clientY - rect.top - 12;
+      const maxX = rect.width - 180;
+      if (x > maxX) x = e.clientX - rect.left - 14 - 170;
+      if (y < 4) y = 4;
+      tooltip.style.left = `${x}px`;
+      tooltip.style.top = `${y}px`;
+    });
+    pt.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+  });
+}
+
+function renderTable(filtered) {
+  let rows = filtered.slice().sort((a, b) => {
+    if (sortKey === 'brand_name') {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      let c = a.brand.localeCompare(b.brand); if (c) return c * dir;
+      return a.name.localeCompare(b.name) * dir;
+    }
+    let av = a[sortKey], bv = b[sortKey];
+    if (sortKey === 'price') { av = av === null || av === undefined ? -Infinity : av; bv = bv === null || bv === undefined ? -Infinity : bv; }
+    if (av === null || av === undefined) av = '';
+    if (bv === null || bv === undefined) bv = '';
+    if (typeof av === 'string') { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return sortDir === 'asc' ? -1 : 1;
+    if (av > bv) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  document.getElementById('result-count').textContent = `${rows.length} results`;
+
+  const tbody = document.getElementById('table-body');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">No products match the current filters</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(p => {
+    const priced = p.price !== null && p.price !== undefined;
+    const st = statusOf(p);
+    const nameTitle = p.full_name && p.full_name !== p.name ? ` title="${p.full_name.replace(/"/g, '&quot;')}"` : '';
+    return `
+    <tr>
+      <td><span class="badge ${p.brand}">${p.brand}</span></td>
+      <td class="product-name"${nameTitle}>${p.name}</td>
+      <td>${p.config ? `<span class="config-pill">${p.config}</span>` : '<span class="price-na">-</span>'}</td>
+      <td>
+        ${priced ? `<div class="price-main">${p.price.toFixed(2)} QAR</div>` : `<span class="price-na">No listed price</span>`}
+        ${!priced && st !== 'priced' ? `<span class="status-pill ${st}">${st === 'coming_soon' ? 'Coming Soon' : 'Where to buy'}</span>` : ''}
+      </td>
+      <td class="config-line">${p.source}</td>
+      <td><a class="link" href="${p.url}" target="_blank">Visit ↗</a></td>
+    </tr>
+  `;
+  }).join('');
+}
+
+function wireFilterEvents() {
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    state.brand = ''; state.status = ''; state.name = [];
+    render();
+  });
+  document.getElementById('filter-brand').addEventListener('change', (e) => {
+    state.brand = e.target.value; render();
+  });
+  document.getElementById('filter-status').addEventListener('change', (e) => {
+    state.status = e.target.value; render();
+  });
+  document.querySelectorAll('thead th[data-key]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key === 'name' ? 'brand_name' : th.dataset.key;
+      if (sortKey === key) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; }
+      else { sortKey = key; sortDir = 'asc'; }
+      renderTable(applyFilters(allProducts));
+    });
+  });
+  // Trend-chart-only filters — these never touch `state`/render(), only trendState + renderTrendChart().
+  document.getElementById('trend-filter-brand').addEventListener('change', (e) => {
+    trendState.brand = e.target.value;
+    trendState.model = '';
+    populateTrendModelOptions();
+    try { renderTrendChart(); } catch (err) { console.warn('Trend chart skipped:', err); }
+  });
+  document.getElementById('trend-filter-model').addEventListener('change', (e) => {
+    trendState.model = e.target.value;
+    try { renderTrendChart(); } catch (err) { console.warn('Trend chart skipped:', err); }
+  });
+}
+
+boot();
+</script>
+
+</body>
+</html>

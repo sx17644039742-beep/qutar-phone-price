@@ -145,6 +145,13 @@
     background: linear-gradient(135deg, rgba(124,58,237,0.85), rgba(34,211,238,0.55));
     color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 13px; cursor: pointer; font-weight: 600;
   }
+  .filter-bar .export-btn {
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+    color: var(--text); padding: 10px 20px; border-radius: 10px; font-size: 13px; cursor: pointer; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .filter-bar .export-btn:hover { border-color: var(--accent-2); color: #fff; }
   .filter-bar .result-count { font-size: 12px; color: var(--muted); align-self: center; }
 
   table { width: 100%; border-collapse: collapse; }
@@ -218,6 +225,28 @@
     </div>
   </div>
 
+  <div class="glow-card panel">
+    <div class="panel-head">
+      <h2>Same-Tier Price Comparison <span class="panel-note">(manually paired same-tier models, prices are current shopintertec.com listings)</span></h2>
+    </div>
+    <table id="benchmark-table">
+      <thead>
+        <tr>
+          <th>Xiaomi Model</th>
+          <th>Xiaomi Price</th>
+          <th>Samsung Model</th>
+          <th>Samsung Price</th>
+          <th>Samsung vs Xiaomi</th>
+          <th>Honor Model</th>
+          <th>Honor Price</th>
+          <th>Honor vs Xiaomi</th>
+        </tr>
+      </thead>
+      <tbody id="benchmark-body"></tbody>
+    </table>
+    <div class="panel-note" style="margin-top:10px;">只展示小米/三星/荣耀三个品牌都能在卡塔尔找到真实对应在售型号的配对行；只要有一边在卡塔尔没有对应型号在卖，这一行就不会显示。每一格显示的配置都是卡塔尔本地实际在售的真实配置（可能跟配对表最初假设的配置不完全一致，鼠标悬停型号名可查看具体说明），价格仍是真实标价。</div>
+  </div>
+
   <div class="glow-card filter-bar">
     <div class="filter-field">
       <label>Product Name</label>
@@ -237,6 +266,7 @@
       </select>
     </div>
     <button class="reset-btn" id="reset-btn">Reset Filters</button>
+    <button class="export-btn" id="export-btn" title="Export the currently filtered/sorted table below as a CSV file">⭳ Export CSV</button>
     <div class="spacer"></div>
     <span class="result-count" id="result-count"></span>
   </div>
@@ -264,12 +294,13 @@
 
 <script>
 const API_BASE = '';
-const EMBEDDED_DATA = {"scraped_at": "2026-07-10", "currency": "QAR", "products": [{"sku": "qa-honor-600-5g-12g+256g", "brand": "Honor", "name": "HONOR 600 5G", "price": 1899.0, "url": "https://shopintertec.com/products/honor-600-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9242103316695"}, {"sku": "qa-honor-600-5g-8g+256g", "brand": "Honor", "name": "HONOR 600 5G", "price": 1599.0, "url": "https://shopintertec.com/products/honor-600-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9242103316695"}, {"sku": "qa-honor-magic-8-pro-12g+512g", "brand": "Honor", "name": "HONOR Magic 8 Pro", "price": 3849.0, "url": "https://shopintertec.com/products/honor-magic8-pro", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "9124637573335"}, {"sku": "qa-honor-magic-8-pro-16g+1t", "brand": "Honor", "name": "HONOR Magic 8 Pro", "price": 4699.0, "url": "https://shopintertec.com/products/honor-magic8-pro", "source": "shopintertec.com", "monitor": true, "config": "16G+1T", "product_id": "9124637573335"}, {"sku": "qa-honor-magic-v6-5g-16g+512g", "brand": "Honor", "name": "HONOR Magic V6 5G", "price": 6999.0, "url": "https://shopintertec.com/products/honor-magic-v6-5g", "source": "shopintertec.com", "monitor": true, "config": "16G+512G", "product_id": "9301693006039"}, {"sku": "qa-honor-x5-b-4g+64g", "brand": "Honor", "name": "HONOR X5 B", "price": 279.0, "url": "https://shopintertec.com/products/honor-x5-b-1", "source": "shopintertec.com", "monitor": true, "config": "4G+64G", "product_id": "8879786655959"}, {"sku": "qa-honor-x5c-4g+64g", "brand": "Honor", "name": "HONOR X5C", "price": 349.0, "url": "https://shopintertec.com/products/honor-x5c", "source": "shopintertec.com", "monitor": true, "config": "4G+64G", "product_id": "9061728452823"}, {"sku": "qa-honor-x6d-5g-2967", "brand": "Honor", "name": "HONOR X6d 5G", "price": 629.0, "url": "https://shopintertec.com/products/honor-x6d-5g", "source": "shopintertec.com", "monitor": true, "config": null, "product_id": "9212289482967"}, {"sku": "qa-honor-x7c-4g+256g", "brand": "Honor", "name": "HONOR X7c", "price": 509.0, "url": "https://shopintertec.com/products/honor-x7-c", "source": "shopintertec.com", "monitor": true, "config": "4G+256G", "product_id": "8805339005143"}, {"sku": "qa-honor-x7c-8g+256g", "brand": "Honor", "name": "HONOR X7c", "price": 509.0, "url": "https://shopintertec.com/products/honor-x7-c", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8805339005143"}, {"sku": "qa-honor-x7c-5g-4g+256g", "brand": "Honor", "name": "HONOR X7c 5G", "price": 549.0, "url": "https://shopintertec.com/products/honor-x7-c-5g", "source": "shopintertec.com", "monitor": true, "config": "4G+256G", "product_id": "8879828893911"}, {"sku": "qa-honor-x7c-5g-8g+256g", "brand": "Honor", "name": "HONOR X7c 5G", "price": 699.0, "url": "https://shopintertec.com/products/honor-x7-c-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8879828893911"}, {"sku": "qa-honor-x7d-4g-8g+256g", "brand": "Honor", "name": "HONOR X7d 4G", "price": 749.0, "url": "https://shopintertec.com/products/honor-x7d-4g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9043880837335"}, {"sku": "qa-honor-x7d-5g-6g+128g", "brand": "Honor", "name": "HONOR X7d 5G", "price": 549.0, "url": "https://shopintertec.com/products/honor-x7d-5g", "source": "shopintertec.com", "monitor": true, "config": "6G+128G", "product_id": "9043880771799"}, {"sku": "qa-honor-x7d-5g-8g+256g", "brand": "Honor", "name": "HONOR X7d 5G", "price": 839.0, "url": "https://shopintertec.com/products/honor-x7d-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9043880771799"}, {"sku": "qa-honor-x8-c-8g+256g", "brand": "Honor", "name": "HONOR X8 C", "price": 599.0, "url": "https://shopintertec.com/products/honor-x8-c", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8879856124119"}, {"sku": "qa-honor-x8d-4g-8g+256g", "brand": "Honor", "name": "HONOR X8d 4G", "price": 749.0, "url": "https://shopintertec.com/products/honor-x8d-4g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9159144505559"}, {"sku": "qa-honor-x9c-smart-5g-12g+256g", "brand": "Honor", "name": "HONOR X9C SMART 5G", "price": 829.0, "url": "https://shopintertec.com/products/honor-x9c-smart-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "8881882792151"}, {"sku": "qa-honor-x9c-5g-12g+256g", "brand": "Honor", "name": "HONOR X9c 5G", "price": 1099.0, "url": "https://shopintertec.com/products/honor-x9c-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "8767679234263"}, {"sku": "qa-honor-x9d-5g-12g+256g", "brand": "Honor", "name": "HONOR X9d 5G", "price": 1269.0, "url": "https://shopintertec.com/products/unbreakable-performance-honor-x9d-5g-phone", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9065699999959"}, {"sku": "qa-honor-x6b-6g+128g", "brand": "Honor", "name": "Honor X6b", "price": 375.0, "url": "https://shopintertec.com/products/honor-x6b", "source": "shopintertec.com", "monitor": true, "config": "6G+128G", "product_id": "8682007658711"}, {"sku": "qa-honor-x6b-6g+256g", "brand": "Honor", "name": "Honor X6b", "price": 415.0, "url": "https://shopintertec.com/products/honor-x6b", "source": "shopintertec.com", "monitor": true, "config": "6G+256G", "product_id": "8682007658711"}, {"sku": "qa-samsung-galaxy-a07-5g-6g+128g", "brand": "Samsung", "name": "Samsung Galaxy A07 5G", "price": 599.0, "url": "https://shopintertec.com/products/samsung-galaxy-a07-5g", "source": "shopintertec.com", "monitor": true, "config": "6G+128G", "product_id": "9234020237527"}, {"sku": "qa-samsung-galaxy-a17-5g-4g+128g", "brand": "Samsung", "name": "Samsung Galaxy A17 5G", "price": 629.0, "url": "https://shopintertec.com/products/samsung-galaxy-a17-5g", "source": "shopintertec.com", "monitor": true, "config": "4G+128G", "product_id": "9023808078039"}, {"sku": "qa-samsung-galaxy-a17-5g-8g+256g", "brand": "Samsung", "name": "Samsung Galaxy A17 5G", "price": 899.0, "url": "https://shopintertec.com/products/samsung-galaxy-a17-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9023808078039"}, {"sku": "qa-samsung-galaxy-a26-8g+256g", "brand": "Samsung", "name": "Samsung Galaxy A26", "price": 949.0, "url": "https://shopintertec.com/products/samsung-galaxy-a26", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8874199974103"}, {"sku": "qa-samsung-galaxy-a37-5g-8g+256g", "brand": "Samsung", "name": "Samsung Galaxy A37 5G", "price": 1299.0, "url": "https://shopintertec.com/products/samsung-galaxy-a37-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9237583495383"}, {"sku": "qa-samsung-galaxy-a57-5g-8g+256g", "brand": "Samsung", "name": "Samsung Galaxy A57 5G", "price": 1449.0, "url": "https://shopintertec.com/products/samsung-galaxy-a57-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9237584216279"}, {"sku": "qa-samsung-galaxy-s25-ultra-5g-12g+256g", "brand": "Samsung", "name": "Samsung Galaxy S25 Ultra 5G", "price": 3149.0, "url": "https://shopintertec.com/products/samsung-galaxy-s25-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "8819567657175"}, {"sku": "qa-samsung-galaxy-s25-ultra-5g-12g+512g", "brand": "Samsung", "name": "Samsung Galaxy S25 Ultra 5G", "price": 4199.0, "url": "https://shopintertec.com/products/samsung-galaxy-s25-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "8819567657175"}, {"sku": "qa-samsung-galaxy-s26-5g-12g+256g", "brand": "Samsung", "name": "Samsung Galaxy S26 5G", "price": 2899.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9192417984727"}, {"sku": "qa-samsung-galaxy-s26-5g-12g+512g", "brand": "Samsung", "name": "Samsung Galaxy S26 5G", "price": 3599.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "9192417984727"}, {"sku": "qa-samsung-galaxy-s26-ultra-5g-12g+256g", "brand": "Samsung", "name": "Samsung Galaxy S26 Ultra 5G", "price": 3799.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9192423358679"}, {"sku": "qa-samsung-galaxy-s26-ultra-5g-12g+512g", "brand": "Samsung", "name": "Samsung Galaxy S26 Ultra 5G", "price": 4649.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "9192423358679"}, {"sku": "qa-samsung-galaxy-s26-ultra-5g-16g+1t", "brand": "Samsung", "name": "Samsung Galaxy S26 Ultra 5G", "price": 5799.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "16G+1T", "product_id": "9192423358679"}, {"sku": "qa-redmi-14c-4g+128g", "brand": "Xiaomi", "name": "Redmi 14C", "price": 349.0, "url": "https://shopintertec.com/products/redmi-14c", "source": "shopintertec.com", "monitor": true, "config": "4G+128G", "product_id": "8698394181847"}, {"sku": "qa-redmi-14c-8g+256g", "brand": "Xiaomi", "name": "Redmi 14C", "price": 399.0, "url": "https://shopintertec.com/products/redmi-14c", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8698394181847"}, {"sku": "qa-redmi-15c-4g-4g+256g", "brand": "Xiaomi", "name": "Redmi 15C 4G", "price": 479.0, "url": "https://shopintertec.com/products/redmi-15c-4g-1", "source": "shopintertec.com", "monitor": true, "config": "4G+256G", "product_id": "9270722527447"}, {"sku": "qa-redmi-15c-5g-4g+128g", "brand": "Xiaomi", "name": "Redmi 15C 5G", "price": 479.0, "url": "https://shopintertec.com/products/redmi-15c-5g", "source": "shopintertec.com", "monitor": true, "config": "4G+128G", "product_id": "9038453211351"}, {"sku": "qa-redmi-15c-5g-8g+256g", "brand": "Xiaomi", "name": "Redmi 15C 5G", "price": 559.0, "url": "https://shopintertec.com/products/redmi-15c-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9038453211351"}, {"sku": "qa-redmi-note-15-pro-5g-12g+256g", "brand": "Xiaomi", "name": "Redmi Note 15 Pro 5G", "price": 1279.0, "url": "https://shopintertec.com/products/redmi-note-15-pro-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9144632541399"}, {"sku": "qa-redmi-note-15-pro-5g-8g+256g", "brand": "Xiaomi", "name": "Redmi Note 15 Pro 5G", "price": 1179.0, "url": "https://shopintertec.com/products/redmi-note-15-pro-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9144632541399"}, {"sku": "qa-xiaomi-15-5g-12g+512g", "brand": "Xiaomi", "name": "Xiaomi 15 5G", "price": 2699.0, "url": "https://shopintertec.com/products/xiaomi-15-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "8855385800919"}, {"sku": "qa-xiaomi-17t-5g-12g+256g", "brand": "Xiaomi", "name": "Xiaomi 17T 5G", "price": 1999.0, "url": "https://shopintertec.com/products/xiaomi-17t-5g-new-arrival", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9269439365335"}, {"sku": "qa-xiaomi-17t-5g-12g+512g", "brand": "Xiaomi", "name": "Xiaomi 17T 5G", "price": 2199.0, "url": "https://shopintertec.com/products/xiaomi-17t-5g-new-arrival", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "9269439365335"}]};
-const EMBEDDED_HISTORY = {"qa-honor-600-5g-12g+256g": {"2026-07-10": 1899.0}, "qa-honor-600-5g-8g+256g": {"2026-07-10": 1599.0}, "qa-honor-magic-8-pro-12g+512g": {"2026-07-10": 3849.0}, "qa-honor-magic-8-pro-16g+1t": {"2026-07-10": 4699.0}, "qa-honor-magic-v6-5g-16g+512g": {"2026-07-10": 6999.0}, "qa-honor-x5-b-4g+64g": {"2026-07-10": 279.0}, "qa-honor-x5c-4g+64g": {"2026-07-10": 349.0}, "qa-honor-x6d-5g-2967": {"2026-07-10": 629.0}, "qa-honor-x7c-4g+256g": {"2026-07-10": 509.0}, "qa-honor-x7c-8g+256g": {"2026-07-10": 509.0}, "qa-honor-x7c-5g-4g+256g": {"2026-07-10": 549.0}, "qa-honor-x7c-5g-8g+256g": {"2026-07-10": 699.0}, "qa-honor-x7d-4g-8g+256g": {"2026-07-10": 749.0}, "qa-honor-x7d-5g-6g+128g": {"2026-07-10": 549.0}, "qa-honor-x7d-5g-8g+256g": {"2026-07-10": 839.0}, "qa-honor-x8-c-8g+256g": {"2026-07-10": 599.0}, "qa-honor-x8d-4g-8g+256g": {"2026-07-10": 749.0}, "qa-honor-x9c-smart-5g-12g+256g": {"2026-07-10": 829.0}, "qa-honor-x9c-5g-12g+256g": {"2026-07-10": 1099.0}, "qa-honor-x9d-5g-12g+256g": {"2026-07-10": 1269.0}, "qa-honor-x6b-6g+128g": {"2026-07-10": 375.0}, "qa-honor-x6b-6g+256g": {"2026-07-10": 415.0}, "qa-samsung-galaxy-a07-5g-6g+128g": {"2026-07-10": 599.0}, "qa-samsung-galaxy-a17-5g-4g+128g": {"2026-07-10": 629.0}, "qa-samsung-galaxy-a17-5g-8g+256g": {"2026-07-10": 899.0}, "qa-samsung-galaxy-a26-8g+256g": {"2026-07-10": 949.0}, "qa-samsung-galaxy-a37-5g-8g+256g": {"2026-07-10": 1299.0}, "qa-samsung-galaxy-a57-5g-8g+256g": {"2026-07-10": 1449.0}, "qa-samsung-galaxy-s25-ultra-5g-12g+256g": {"2026-07-10": 3149.0}, "qa-samsung-galaxy-s25-ultra-5g-12g+512g": {"2026-07-10": 4199.0}, "qa-samsung-galaxy-s26-5g-12g+256g": {"2026-07-10": 2899.0}, "qa-samsung-galaxy-s26-5g-12g+512g": {"2026-07-10": 3599.0}, "qa-samsung-galaxy-s26-ultra-5g-12g+256g": {"2026-07-10": 3799.0}, "qa-samsung-galaxy-s26-ultra-5g-12g+512g": {"2026-07-10": 4649.0}, "qa-samsung-galaxy-s26-ultra-5g-16g+1t": {"2026-07-10": 5799.0}, "qa-redmi-14c-4g+128g": {"2026-07-10": 349.0}, "qa-redmi-14c-8g+256g": {"2026-07-10": 399.0}, "qa-redmi-15c-4g-4g+256g": {"2026-07-10": 479.0}, "qa-redmi-15c-5g-4g+128g": {"2026-07-10": 479.0}, "qa-redmi-15c-5g-8g+256g": {"2026-07-10": 559.0}, "qa-redmi-note-15-pro-5g-12g+256g": {"2026-07-10": 1279.0}, "qa-redmi-note-15-pro-5g-8g+256g": {"2026-07-10": 1179.0}, "qa-xiaomi-15-5g-12g+512g": {"2026-07-10": 2699.0}, "qa-xiaomi-17t-5g-12g+256g": {"2026-07-10": 1999.0}, "qa-xiaomi-17t-5g-12g+512g": {"2026-07-10": 2199.0}};
+const EMBEDDED_DATA = {"scraped_at": "2026-07-10", "currency": "QAR", "products": [{"sku": "qa-honor-600-5g-12g+256g", "brand": "Honor", "name": "Honor 600 5G", "price": 1899.0, "url": "https://shopintertec.com/products/honor-600-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9242103316695"}, {"sku": "qa-honor-600-5g-8g+256g", "brand": "Honor", "name": "Honor 600 5G", "price": 1599.0, "url": "https://shopintertec.com/products/honor-600-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9242103316695"}, {"sku": "qa-honor-magic-8-pro-12g+512g", "brand": "Honor", "name": "Honor Magic 8 Pro", "price": 3849.0, "url": "https://shopintertec.com/products/honor-magic8-pro", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "9124637573335"}, {"sku": "qa-honor-magic-8-pro-16g+1t", "brand": "Honor", "name": "Honor Magic 8 Pro", "price": 4699.0, "url": "https://shopintertec.com/products/honor-magic8-pro", "source": "shopintertec.com", "monitor": true, "config": "16G+1T", "product_id": "9124637573335"}, {"sku": "qa-honor-magic-v6-5g-16g+512g", "brand": "Honor", "name": "Honor Magic V6 5G", "price": 6999.0, "url": "https://shopintertec.com/products/honor-magic-v6-5g", "source": "shopintertec.com", "monitor": true, "config": "16G+512G", "product_id": "9301693006039"}, {"sku": "qa-honor-x5-b-4g+64g", "brand": "Honor", "name": "Honor X5 B", "price": 279.0, "url": "https://shopintertec.com/products/honor-x5-b-1", "source": "shopintertec.com", "monitor": true, "config": "4G+64G", "product_id": "8879786655959"}, {"sku": "qa-honor-x5c-4g+64g", "brand": "Honor", "name": "Honor X5C", "price": 349.0, "url": "https://shopintertec.com/products/honor-x5c", "source": "shopintertec.com", "monitor": true, "config": "4G+64G", "product_id": "9061728452823"}, {"sku": "qa-honor-x6b-6g+128g", "brand": "Honor", "name": "Honor X6b", "price": 375.0, "url": "https://shopintertec.com/products/honor-x6b", "source": "shopintertec.com", "monitor": true, "config": "6G+128G", "product_id": "8682007658711"}, {"sku": "qa-honor-x6b-6g+256g", "brand": "Honor", "name": "Honor X6b", "price": 415.0, "url": "https://shopintertec.com/products/honor-x6b", "source": "shopintertec.com", "monitor": true, "config": "6G+256G", "product_id": "8682007658711"}, {"sku": "qa-honor-x6d-5g-2967", "brand": "Honor", "name": "Honor X6d 5G", "price": 629.0, "url": "https://shopintertec.com/products/honor-x6d-5g", "source": "shopintertec.com", "monitor": true, "config": null, "product_id": "9212289482967"}, {"sku": "qa-honor-x7c-4g+256g", "brand": "Honor", "name": "Honor X7c", "price": 509.0, "url": "https://shopintertec.com/products/honor-x7-c", "source": "shopintertec.com", "monitor": true, "config": "4G+256G", "product_id": "8805339005143"}, {"sku": "qa-honor-x7c-8g+256g", "brand": "Honor", "name": "Honor X7c", "price": 509.0, "url": "https://shopintertec.com/products/honor-x7-c", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8805339005143"}, {"sku": "qa-honor-x7c-5g-4g+256g", "brand": "Honor", "name": "Honor X7c 5G", "price": 549.0, "url": "https://shopintertec.com/products/honor-x7-c-5g", "source": "shopintertec.com", "monitor": true, "config": "4G+256G", "product_id": "8879828893911"}, {"sku": "qa-honor-x7c-5g-8g+256g", "brand": "Honor", "name": "Honor X7c 5G", "price": 699.0, "url": "https://shopintertec.com/products/honor-x7-c-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8879828893911"}, {"sku": "qa-honor-x7d-4g-8g+256g", "brand": "Honor", "name": "Honor X7d 4G", "price": 749.0, "url": "https://shopintertec.com/products/honor-x7d-4g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9043880837335"}, {"sku": "qa-honor-x7d-5g-6g+128g", "brand": "Honor", "name": "Honor X7d 5G", "price": 549.0, "url": "https://shopintertec.com/products/honor-x7d-5g", "source": "shopintertec.com", "monitor": true, "config": "6G+128G", "product_id": "9043880771799"}, {"sku": "qa-honor-x7d-5g-8g+256g", "brand": "Honor", "name": "Honor X7d 5G", "price": 839.0, "url": "https://shopintertec.com/products/honor-x7d-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9043880771799"}, {"sku": "qa-honor-x8-c-8g+256g", "brand": "Honor", "name": "Honor X8 C", "price": 599.0, "url": "https://shopintertec.com/products/honor-x8-c", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8879856124119"}, {"sku": "qa-honor-x8d-4g-8g+256g", "brand": "Honor", "name": "Honor X8d 4G", "price": 749.0, "url": "https://shopintertec.com/products/honor-x8d-4g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9159144505559"}, {"sku": "qa-honor-x9c-smart-5g-12g+256g", "brand": "Honor", "name": "Honor X9C SMART 5G", "price": 829.0, "url": "https://shopintertec.com/products/honor-x9c-smart-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "8881882792151"}, {"sku": "qa-honor-x9c-5g-12g+256g", "brand": "Honor", "name": "Honor X9c 5G", "price": 1099.0, "url": "https://shopintertec.com/products/honor-x9c-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "8767679234263"}, {"sku": "qa-honor-x9d-5g-12g+256g", "brand": "Honor", "name": "Honor X9d 5G", "price": 1269.0, "url": "https://shopintertec.com/products/unbreakable-performance-honor-x9d-5g-phone", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9065699999959"}, {"sku": "qa-galaxy-a07-5g-6g+128g", "brand": "Samsung", "name": "Galaxy A07 5G", "price": 599.0, "url": "https://shopintertec.com/products/samsung-galaxy-a07-5g", "source": "shopintertec.com", "monitor": true, "config": "6G+128G", "product_id": "9234020237527"}, {"sku": "qa-galaxy-a17-5g-4g+128g", "brand": "Samsung", "name": "Galaxy A17 5G", "price": 629.0, "url": "https://shopintertec.com/products/samsung-galaxy-a17-5g", "source": "shopintertec.com", "monitor": true, "config": "4G+128G", "product_id": "9023808078039"}, {"sku": "qa-galaxy-a17-5g-8g+256g", "brand": "Samsung", "name": "Galaxy A17 5G", "price": 899.0, "url": "https://shopintertec.com/products/samsung-galaxy-a17-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9023808078039"}, {"sku": "qa-galaxy-a26-8g+256g", "brand": "Samsung", "name": "Galaxy A26", "price": 949.0, "url": "https://shopintertec.com/products/samsung-galaxy-a26", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8874199974103"}, {"sku": "qa-galaxy-a37-5g-8g+256g", "brand": "Samsung", "name": "Galaxy A37 5G", "price": 1299.0, "url": "https://shopintertec.com/products/samsung-galaxy-a37-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9237583495383"}, {"sku": "qa-galaxy-a57-5g-8g+256g", "brand": "Samsung", "name": "Galaxy A57 5G", "price": 1449.0, "url": "https://shopintertec.com/products/samsung-galaxy-a57-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9237584216279"}, {"sku": "qa-galaxy-s25-ultra-5g-12g+256g", "brand": "Samsung", "name": "Galaxy S25 Ultra 5G", "price": 3149.0, "url": "https://shopintertec.com/products/samsung-galaxy-s25-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "8819567657175"}, {"sku": "qa-galaxy-s25-ultra-5g-12g+512g", "brand": "Samsung", "name": "Galaxy S25 Ultra 5G", "price": 4199.0, "url": "https://shopintertec.com/products/samsung-galaxy-s25-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "8819567657175"}, {"sku": "qa-galaxy-s26-5g-12g+256g", "brand": "Samsung", "name": "Galaxy S26 5G", "price": 2899.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9192417984727"}, {"sku": "qa-galaxy-s26-5g-12g+512g", "brand": "Samsung", "name": "Galaxy S26 5G", "price": 3599.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "9192417984727"}, {"sku": "qa-galaxy-s26-ultra-5g-12g+256g", "brand": "Samsung", "name": "Galaxy S26 Ultra 5G", "price": 3799.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9192423358679"}, {"sku": "qa-galaxy-s26-ultra-5g-12g+512g", "brand": "Samsung", "name": "Galaxy S26 Ultra 5G", "price": 4649.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "9192423358679"}, {"sku": "qa-galaxy-s26-ultra-5g-16g+1t", "brand": "Samsung", "name": "Galaxy S26 Ultra 5G", "price": 5799.0, "url": "https://shopintertec.com/products/samsung-galaxy-s26-ultra-5g", "source": "shopintertec.com", "monitor": true, "config": "16G+1T", "product_id": "9192423358679"}, {"sku": "qa-redmi-14c-4g+128g", "brand": "Xiaomi", "name": "Redmi 14C", "price": 349.0, "url": "https://shopintertec.com/products/redmi-14c", "source": "shopintertec.com", "monitor": true, "config": "4G+128G", "product_id": "8698394181847"}, {"sku": "qa-redmi-14c-8g+256g", "brand": "Xiaomi", "name": "Redmi 14C", "price": 399.0, "url": "https://shopintertec.com/products/redmi-14c", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "8698394181847"}, {"sku": "qa-redmi-15c-4g-4g+256g", "brand": "Xiaomi", "name": "Redmi 15C 4G", "price": 479.0, "url": "https://shopintertec.com/products/redmi-15c-4g-1", "source": "shopintertec.com", "monitor": true, "config": "4G+256G", "product_id": "9270722527447"}, {"sku": "qa-redmi-15c-5g-4g+128g", "brand": "Xiaomi", "name": "Redmi 15C 5G", "price": 479.0, "url": "https://shopintertec.com/products/redmi-15c-5g", "source": "shopintertec.com", "monitor": true, "config": "4G+128G", "product_id": "9038453211351"}, {"sku": "qa-redmi-15c-5g-8g+256g", "brand": "Xiaomi", "name": "Redmi 15C 5G", "price": 559.0, "url": "https://shopintertec.com/products/redmi-15c-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9038453211351"}, {"sku": "qa-redmi-note-15-pro-5g-12g+256g", "brand": "Xiaomi", "name": "Redmi Note 15 Pro 5G", "price": 1279.0, "url": "https://shopintertec.com/products/redmi-note-15-pro-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9144632541399"}, {"sku": "qa-redmi-note-15-pro-5g-8g+256g", "brand": "Xiaomi", "name": "Redmi Note 15 Pro 5G", "price": 1179.0, "url": "https://shopintertec.com/products/redmi-note-15-pro-5g", "source": "shopintertec.com", "monitor": true, "config": "8G+256G", "product_id": "9144632541399"}, {"sku": "qa-xiaomi-15-5g-12g+512g", "brand": "Xiaomi", "name": "Xiaomi 15 5G", "price": 2699.0, "url": "https://shopintertec.com/products/xiaomi-15-5g", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "8855385800919"}, {"sku": "qa-xiaomi-17t-5g-12g+256g", "brand": "Xiaomi", "name": "Xiaomi 17T 5G", "price": 1999.0, "url": "https://shopintertec.com/products/xiaomi-17t-5g-new-arrival", "source": "shopintertec.com", "monitor": true, "config": "12G+256G", "product_id": "9269439365335"}, {"sku": "qa-xiaomi-17t-5g-12g+512g", "brand": "Xiaomi", "name": "Xiaomi 17T 5G", "price": 2199.0, "url": "https://shopintertec.com/products/xiaomi-17t-5g-new-arrival", "source": "shopintertec.com", "monitor": true, "config": "12G+512G", "product_id": "9269439365335"}]};
+const EMBEDDED_HISTORY = {"qa-honor-600-5g-12g+256g": {"2026-07-10": 1899.0}, "qa-honor-600-5g-8g+256g": {"2026-07-10": 1599.0}, "qa-honor-magic-8-pro-12g+512g": {"2026-07-10": 3849.0}, "qa-honor-magic-8-pro-16g+1t": {"2026-07-10": 4699.0}, "qa-honor-magic-v6-5g-16g+512g": {"2026-07-10": 6999.0}, "qa-honor-x5-b-4g+64g": {"2026-07-10": 279.0}, "qa-honor-x5c-4g+64g": {"2026-07-10": 349.0}, "qa-honor-x6b-6g+128g": {"2026-07-10": 375.0}, "qa-honor-x6b-6g+256g": {"2026-07-10": 415.0}, "qa-honor-x6d-5g-2967": {"2026-07-10": 629.0}, "qa-honor-x7c-4g+256g": {"2026-07-10": 509.0}, "qa-honor-x7c-8g+256g": {"2026-07-10": 509.0}, "qa-honor-x7c-5g-4g+256g": {"2026-07-10": 549.0}, "qa-honor-x7c-5g-8g+256g": {"2026-07-10": 699.0}, "qa-honor-x7d-4g-8g+256g": {"2026-07-10": 749.0}, "qa-honor-x7d-5g-6g+128g": {"2026-07-10": 549.0}, "qa-honor-x7d-5g-8g+256g": {"2026-07-10": 839.0}, "qa-honor-x8-c-8g+256g": {"2026-07-10": 599.0}, "qa-honor-x8d-4g-8g+256g": {"2026-07-10": 749.0}, "qa-honor-x9c-smart-5g-12g+256g": {"2026-07-10": 829.0}, "qa-honor-x9c-5g-12g+256g": {"2026-07-10": 1099.0}, "qa-honor-x9d-5g-12g+256g": {"2026-07-10": 1269.0}, "qa-galaxy-a07-5g-6g+128g": {"2026-07-10": 599.0}, "qa-galaxy-a17-5g-4g+128g": {"2026-07-10": 629.0}, "qa-galaxy-a17-5g-8g+256g": {"2026-07-10": 899.0}, "qa-galaxy-a26-8g+256g": {"2026-07-10": 949.0}, "qa-galaxy-a37-5g-8g+256g": {"2026-07-10": 1299.0}, "qa-galaxy-a57-5g-8g+256g": {"2026-07-10": 1449.0}, "qa-galaxy-s25-ultra-5g-12g+256g": {"2026-07-10": 3149.0}, "qa-galaxy-s25-ultra-5g-12g+512g": {"2026-07-10": 4199.0}, "qa-galaxy-s26-5g-12g+256g": {"2026-07-10": 2899.0}, "qa-galaxy-s26-5g-12g+512g": {"2026-07-10": 3599.0}, "qa-galaxy-s26-ultra-5g-12g+256g": {"2026-07-10": 3799.0}, "qa-galaxy-s26-ultra-5g-12g+512g": {"2026-07-10": 4649.0}, "qa-galaxy-s26-ultra-5g-16g+1t": {"2026-07-10": 5799.0}, "qa-redmi-14c-4g+128g": {"2026-07-10": 349.0}, "qa-redmi-14c-8g+256g": {"2026-07-10": 399.0}, "qa-redmi-15c-4g-4g+256g": {"2026-07-10": 479.0}, "qa-redmi-15c-5g-4g+128g": {"2026-07-10": 479.0}, "qa-redmi-15c-5g-8g+256g": {"2026-07-10": 559.0}, "qa-redmi-note-15-pro-5g-12g+256g": {"2026-07-10": 1279.0}, "qa-redmi-note-15-pro-5g-8g+256g": {"2026-07-10": 1179.0}, "qa-xiaomi-15-5g-12g+512g": {"2026-07-10": 2699.0}, "qa-xiaomi-17t-5g-12g+256g": {"2026-07-10": 1999.0}, "qa-xiaomi-17t-5g-12g+512g": {"2026-07-10": 2199.0}};
 let allProducts = [];
 let sortKey = 'brand_name';
 let sortDir = 'asc';
 const trendCache = {};
+let lastTableRows = []; // the exact filtered+sorted rows currently shown in the table below, kept in sync by renderTable() — CSV export reads from here so it always matches what's on screen
 
 const state = { brand: '', status: '', name: [] };
 const trendState = { brand: 'Samsung', model: '' };
@@ -277,6 +308,7 @@ const msUI = {}; // per-widget-instance-id UI state for the multi-select dropdow
 let msInstances = []; // populated each render() cycle, reused by open/close toggles
 
 const BRAND_COLOR_CYCLE = ['#7c5cff', '#22d3ee', '#ff2e88', '#ffb020', '#33e2a0'];
+const COMPARISON_MAPPING = [{"xiaomi": null, "samsung": {"model_name": "Galaxy S26 Ultra 5G", "config": "12G+256G", "url": "https://shopintertec.com/products/samsung-galaxy-s26-ultra-5g", "price": 3799.0, "note": "卡塔尔三星零售商没有名为「Galaxy S26 Ultra」的完全对应型号，用「Galaxy S26 Ultra 5G」代替"}, "honor": {"model_name": "Honor Magic 8 Pro", "config": "12G+512G", "url": "https://shopintertec.com/products/honor-magic8-pro", "price": 3849.0}}, {"xiaomi": {"model_name": "Xiaomi 17T 5G", "config": "12G+512G", "url": "https://shopintertec.com/products/xiaomi-17t-5g-new-arrival", "price": 2199.0, "note": "卡塔尔小米零售商没有名为「Xiaomi 17T」的完全对应型号，用「Xiaomi 17T 5G」代替"}, "samsung": {"model_name": "Galaxy A57 5G", "config": "8G+256G", "url": "https://shopintertec.com/products/samsung-galaxy-a57-5g", "price": 1449.0, "note": "卡塔尔实际在售配置为 8G+256G，非表格假设的 12G+512G"}, "honor": {"model_name": "Honor 600 5G", "config": "12G+256G", "url": "https://shopintertec.com/products/honor-600-5g", "price": 1899.0, "note": "卡塔尔荣耀零售商没有名为「Honor 600」的完全对应型号，用「Honor 600 5G」代替"}}, {"xiaomi": {"model_name": "Xiaomi 17T 5G", "config": "12G+256G", "url": "https://shopintertec.com/products/xiaomi-17t-5g-new-arrival", "price": 1999.0, "note": "卡塔尔小米零售商没有名为「Xiaomi 17T」的完全对应型号，用「Xiaomi 17T 5G」代替"}, "samsung": {"model_name": "Galaxy A57 5G", "config": "8G+256G", "url": "https://shopintertec.com/products/samsung-galaxy-a57-5g", "price": 1449.0, "note": "卡塔尔实际在售配置为 8G+256G，非表格假设的 12G+256G"}, "honor": {"model_name": "Honor 600 5G", "config": "8G+256G", "url": "https://shopintertec.com/products/honor-600-5g", "price": 1599.0, "note": "卡塔尔荣耀零售商没有名为「Honor 600」的完全对应型号，用「Honor 600 5G」代替"}}, {"xiaomi": null, "samsung": {"model_name": "Galaxy A57 5G", "config": "8G+256G", "url": "https://shopintertec.com/products/samsung-galaxy-a57-5g", "price": 1449.0}, "honor": null}, {"xiaomi": {"model_name": "Redmi Note 15 Pro 5G", "config": "12G+256G", "url": "https://shopintertec.com/products/redmi-note-15-pro-5g", "price": 1279.0}, "samsung": {"model_name": "Galaxy A37 5G", "config": "8G+256G", "url": "https://shopintertec.com/products/samsung-galaxy-a37-5g", "price": 1299.0, "note": "卡塔尔实际在售配置为 8G+256G，非表格假设的 12G+256G"}, "honor": {"model_name": "Honor X9d 5G", "config": "12G+256G", "url": "https://shopintertec.com/products/unbreakable-performance-honor-x9d-5g-phone", "price": 1269.0}}, {"xiaomi": {"model_name": "Redmi Note 15 Pro 5G", "config": "8G+256G", "url": "https://shopintertec.com/products/redmi-note-15-pro-5g", "price": 1179.0}, "samsung": {"model_name": "Galaxy A37 5G", "config": "8G+256G", "url": "https://shopintertec.com/products/samsung-galaxy-a37-5g", "price": 1299.0}, "honor": {"model_name": "Honor X9d 5G", "config": "12G+256G", "url": "https://shopintertec.com/products/unbreakable-performance-honor-x9d-5g-phone", "price": 1269.0, "note": "卡塔尔实际在售配置为 12G+256G，非表格假设的 8G+256G"}}, {"xiaomi": null, "samsung": null, "honor": {"model_name": "Honor X8d 4G", "config": "8G+256G", "url": "https://shopintertec.com/products/honor-x8d-4g", "price": 749.0, "note": "卡塔尔荣耀零售商没有名为「Honor X8d」的完全对应型号，用「Honor X8d 4G」代替；卡塔尔实际在售配置为 8G+256G，非表格假设的 8G+512G"}}, {"xiaomi": null, "samsung": {"model_name": "Galaxy A37 5G", "config": "8G+256G", "url": "https://shopintertec.com/products/samsung-galaxy-a37-5g", "price": 1299.0, "note": "卡塔尔实际在售配置为 8G+256G，非表格假设的 8G+128G"}, "honor": {"model_name": "Honor X8d 4G", "config": "8G+256G", "url": "https://shopintertec.com/products/honor-x8d-4g", "price": 749.0, "note": "卡塔尔荣耀零售商没有名为「Honor X8d」的完全对应型号，用「Honor X8d 4G」代替"}}, {"xiaomi": null, "samsung": {"model_name": "Galaxy A26", "config": "8G+256G", "url": "https://shopintertec.com/products/samsung-galaxy-a26", "price": 949.0}, "honor": null}, {"xiaomi": null, "samsung": {"model_name": "Galaxy A26", "config": "8G+256G", "url": "https://shopintertec.com/products/samsung-galaxy-a26", "price": 949.0, "note": "卡塔尔实际在售配置为 8G+256G，非表格假设的 6G+128G"}, "honor": {"model_name": "Honor X7d 5G", "config": "8G+256G", "url": "https://shopintertec.com/products/honor-x7d-5g", "price": 839.0}}, {"xiaomi": null, "samsung": {"model_name": "Galaxy A17 5G", "config": "8G+256G", "url": "https://shopintertec.com/products/samsung-galaxy-a17-5g", "price": 899.0, "note": "卡塔尔三星零售商没有名为「Galaxy A17」的完全对应型号，用「Galaxy A17 5G」代替"}, "honor": {"model_name": "Honor X7d 4G", "config": "8G+256G", "url": "https://shopintertec.com/products/honor-x7d-4g", "price": 749.0, "note": "卡塔尔荣耀零售商没有名为「Honor X7d」的完全对应型号，用「Honor X7d 4G」代替"}}, {"xiaomi": {"model_name": "Redmi 15C 5G", "config": "4G+128G", "url": "https://shopintertec.com/products/redmi-15c-5g", "price": 479.0}, "samsung": {"model_name": "Galaxy A17 5G", "config": "4G+128G", "url": "https://shopintertec.com/products/samsung-galaxy-a17-5g", "price": 629.0, "note": "卡塔尔三星零售商没有名为「Galaxy A17」的完全对应型号，用「Galaxy A17 5G」代替；卡塔尔实际在售配置为 4G+128G，非表格假设的 6G+128G"}, "honor": null}, {"xiaomi": {"model_name": "Redmi 15C 4G", "config": "4G+256G", "url": "https://shopintertec.com/products/redmi-15c-4g-1", "price": 479.0, "note": "卡塔尔实际在售配置为 4G+256G，非表格假设的 8G+256G"}, "samsung": {"model_name": "Galaxy A17 5G", "config": "4G+128G", "url": "https://shopintertec.com/products/samsung-galaxy-a17-5g", "price": 629.0, "note": "卡塔尔三星零售商没有名为「Galaxy A17」的完全对应型号，用「Galaxy A17 5G」代替"}, "honor": null}, {"xiaomi": {"model_name": "Redmi 15C 4G", "config": "4G+256G", "url": "https://shopintertec.com/products/redmi-15c-4g-1", "price": 479.0, "note": "卡塔尔实际在售配置为 4G+256G，非表格假设的 4G+128G"}, "samsung": {"model_name": "Galaxy A07 5G", "config": "6G+128G", "url": "https://shopintertec.com/products/samsung-galaxy-a07-5g", "price": 599.0, "note": "卡塔尔三星零售商没有名为「Galaxy A07」的完全对应型号，用「Galaxy A07 5G」代替"}, "honor": null}, {"xiaomi": null, "samsung": {"model_name": "Galaxy A07 5G", "config": "6G+128G", "url": "https://shopintertec.com/products/samsung-galaxy-a07-5g", "price": 599.0, "note": "卡塔尔三星零售商没有名为「Galaxy A07」的完全对应型号，用「Galaxy A07 5G」代替；卡塔尔实际在售配置为 6G+128G，非表格假设的 4G+128G"}, "honor": null}, {"xiaomi": null, "samsung": {"model_name": "Galaxy A07 5G", "config": "6G+128G", "url": "https://shopintertec.com/products/samsung-galaxy-a07-5g", "price": 599.0, "note": "卡塔尔三星零售商没有名为「Galaxy A07」的完全对应型号，用「Galaxy A07 5G」代替；卡塔尔实际在售配置为 6G+128G，非表格假设的 4G+64G"}, "honor": {"model_name": "Honor X5C", "config": "4G+64G", "url": "https://shopintertec.com/products/honor-x5c", "price": 349.0}}];
 
 
 function statusOf(p) {
@@ -446,6 +478,7 @@ function render() {
   renderKPI(filtered);
   renderBrandCards(filtered);
   try { renderTrendChart(); } catch (e) { console.warn('Trend chart skipped:', e); }
+  try { renderBenchmark(); } catch (e) { console.warn('Benchmark table skipped:', e); }
   renderTable(filtered);
 
   document.getElementById('header-sub').textContent =
@@ -559,6 +592,7 @@ async function renderTrendChart() {
   if (!wrap) return;
   if (!lines.length) {
     if (badge) badge.style.display = 'none';
+    if (outerWrap) outerWrap.style.height = '120px';
     wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:13px;">No priced models for this brand yet</div>';
     return;
   }
@@ -573,22 +607,30 @@ async function renderTrendChart() {
   }
 
   if (daysRecorded <= 1) {
+    // Single-day snapshot: this view is just a compact row of price cards
+    // (no line to draw yet), so it doesn't need the full 300px chart height
+    // — shrink the wrapper to fit the content instead of leaving a lot of
+    // empty space above/below.
+    if (outerWrap) outerWrap.style.height = '150px';
     wrap.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;">
-        <div style="color:var(--muted);font-size:12.5px;max-width:640px;text-align:center;line-height:1.6;">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;">
+        <div style="color:var(--muted);font-size:12.5px;max-width:640px;text-align:center;line-height:1.5;">
           Only one real price snapshot has been recorded so far${allDates[0] ? ' (' + allDates[0] + ')' : ''}. A trend line needs at least two days of
           real data — re-run the local update script on a later day and this turns into a real multi-point chart automatically.
         </div>
         <div style="display:flex;gap:28px;flex-wrap:wrap;justify-content:center;">
           ${lines.map((p, li) => `<div style="text-align:center;">
-              <div style="width:10px;height:10px;border-radius:2px;background:${BRAND_COLOR_CYCLE[li % BRAND_COLOR_CYCLE.length]};margin:0 auto 8px;"></div>
-              <div style="font-size:22px;font-weight:700;color:#fff;">${p.price.toFixed(0)} QAR</div>
+              <div style="width:10px;height:10px;border-radius:2px;background:${BRAND_COLOR_CYCLE[li % BRAND_COLOR_CYCLE.length]};margin:0 auto 6px;"></div>
+              <div style="font-size:20px;font-weight:700;color:#fff;">${p.price.toFixed(0)} QAR</div>
               <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">${p.name}${p.config ? ' · ' + p.config : ''}</div>
             </div>`).join('')}
         </div>
       </div>`;
     return;
   }
+
+  // Multi-day line chart needs the full height back.
+  if (outerWrap) outerWrap.style.height = '';
 
   const labels = allDates;
   const perSeries = seriesList.map(s => {
@@ -700,6 +742,7 @@ function renderTable(filtered) {
     return 0;
   });
 
+  lastTableRows = rows;
   document.getElementById('result-count').textContent = `${rows.length} results`;
 
   const tbody = document.getElementById('table-body');
@@ -728,11 +771,101 @@ function renderTable(filtered) {
   }).join('');
 }
 
+// ---------- Price Comparison (curated mapping from uploaded xlsx, matched
+// against real scraped Qatar data — not computed by "nearest price") ----------
+function renderBenchmark() {
+  const tbody = document.getElementById('benchmark-body');
+  if (!tbody) return;
+
+  function diffCell(diff) {
+    const cls = diff >= 0 ? 'bm-diff-up' : 'bm-diff-down';
+    const sign = diff >= 0 ? '+' : '';
+    return `<span class="${cls}">${sign}${diff.toFixed(2)} QAR</span>`;
+  }
+  function cell(entry) {
+    if (!entry) return { name: '—', cfg: '', price: '—' };
+    // The caveat (fuzzy name match / real config differs from the mapping
+    // sheet's assumption) is kept as a hover tooltip on the model name
+    // rather than a visible yellow line — the real matched config is always
+    // shown in the row regardless, so no information is actually hidden.
+    const titleAttr = entry.note ? ` title="${entry.note.replace(/"/g, '&quot;')}"` : '';
+    return {
+      name: `<a href="${entry.url}" target="_blank"${titleAttr} style="color:#9db4ff;text-decoration:none;">${entry.model_name}</a>`,
+      cfg: entry.config,
+      price: entry.price.toFixed(2) + ' QAR',
+    };
+  }
+
+  // Only show rows where all 3 brands have a real matched Qatar product —
+  // if any side couldn't be matched to a real in-stock model, the whole row
+  // is dropped rather than shown with a "—" placeholder.
+  const completeRows = COMPARISON_MAPPING.filter(row => row.xiaomi && row.samsung && row.honor);
+
+  if (!completeRows.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">No rows with all 3 brands matched</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = completeRows.map(row => {
+    const x = cell(row.xiaomi);
+    const s = cell(row.samsung);
+    const h = cell(row.honor);
+    const sDiff = row.samsung.price - row.xiaomi.price;
+    const hDiff = row.honor.price - row.xiaomi.price;
+    return `
+      <tr>
+        <td class="product-name">${x.name}<div class="bm-model">${x.cfg}</div></td>
+        <td class="bm-price">${x.price}</td>
+        <td class="product-name">${s.name}<div class="bm-model">${s.cfg}</div></td>
+        <td class="bm-price">${s.price}</td>
+        <td>${diffCell(sDiff)}</td>
+        <td class="product-name">${h.name}<div class="bm-model">${h.cfg}</div></td>
+        <td class="bm-price">${h.price}</td>
+        <td>${diffCell(hDiff)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ---------- CSV export (exports exactly what's currently shown in the
+// product table below — same filters, same sort, same rows) ----------
+function downloadCSV(filename, header, rows) {
+  const escape = (v) => {
+    const s = (v === null || v === undefined) ? '' : String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const lines = [header, ...rows].map(r => r.map(escape).join(','));
+  const csv = '\uFEFF' + lines.join('\r\n'); // UTF-8 BOM so Excel opens non-ASCII text correctly
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportTableCSV() {
+  const header = ['Brand', 'Product Name', 'Config', 'Price (QAR)', 'Source', 'URL'];
+  const rows = lastTableRows.map(p => [
+    p.brand,
+    p.name,
+    p.config || '',
+    (p.price !== null && p.price !== undefined) ? p.price.toFixed(2) : '',
+    p.source,
+    p.url,
+  ]);
+  const today = new Date().toISOString().slice(0, 10);
+  downloadCSV(`qatar_phone_prices_${today}.csv`, header, rows);
+}
+
 function wireFilterEvents() {
   document.getElementById('reset-btn').addEventListener('click', () => {
     state.brand = ''; state.status = ''; state.name = [];
     render();
   });
+  document.getElementById('export-btn').addEventListener('click', exportTableCSV);
   document.getElementById('filter-brand').addEventListener('change', (e) => {
     state.brand = e.target.value; render();
   });
